@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: review_service_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: reviews_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Review Service (optional)
+  review_service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: review_service_app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/reviews_db
+      PORT: 8006
+      JWT_SECRET_KEY: dev-secret-key
+      ENVIRONMENT: development
+    ports:
+      - "8006:8006"
+    volumes:
+      - .:/app
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 8006
+
+volumes:
+  postgres_data:

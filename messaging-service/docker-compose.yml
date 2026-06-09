@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: platform_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_messaging:/var/lib/postgresql/data
+
+  messaging-service:
+    build: .
+    ports:
+      - "8011:8011"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/platform_db
+      JWT_SECRET_KEY: "change-this-secret"
+      JWT_ALGORITHM: "HS256"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data_messaging:
+    driver: local
